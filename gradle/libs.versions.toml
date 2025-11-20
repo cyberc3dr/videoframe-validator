@@ -1,0 +1,14 @@
+[versions]
+lombok = "1.18.42"
+annotations = "26.0.2-1"
+logback = "1.5.21"
+junit = "6.0.1"
+
+[libraries]
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version = "9.2.2" }
