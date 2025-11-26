@@ -3,12 +3,16 @@ lombok = "1.18.42"
 annotations = "26.0.2-1"
 logback = "1.5.21"
 junit = "6.0.1"
+commons-lang3 = "3.20.0"
+guava = "33.5.0-jre"
 
 [libraries]
 lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 annotations = { module = "org.jetbrains:annotations", version.ref = "annotations" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version = "9.2.2" }

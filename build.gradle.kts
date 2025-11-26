@@ -26,6 +26,8 @@ dependencies {
 
     implementation(libs.annotations)
     implementation(libs.logback)
+    implementation(libs.commons.lang3)
+    implementation(libs.guava)
 
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
