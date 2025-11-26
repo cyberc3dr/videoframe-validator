@@ -5,11 +5,13 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import ru.cyberc3dr.project.Main;
+import ru.cyberc3dr.project.model.ARM;
 import ru.cyberc3dr.project.model.DataCenter;
 import ru.cyberc3dr.project.model.VCluster;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class AlgorithmOneExecutor {
@@ -44,7 +46,24 @@ public final class AlgorithmOneExecutor {
                 .filter(combo -> applicableSignals.stream().allMatch(signal -> signal.getVideoFrames().containsAll(combo)))
                 .collect(Collectors.toSet());
 
-        combos.forEach(combo -> logger.info(combo.toString()));
+        combos.forEach(combo -> {
+            var suitableArms = combo.stream()
+                .flatMap(frame -> dataCenter.getArms().stream().filter(arm -> arm.getVideoFrames().contains(frame)))
+                .collect(Collectors.toSet());
+
+            var availableDisplays = suitableArms.stream().mapToInt(ARM::getDisplayCount).sum();
+
+            if(availableDisplays < power) {
+                logger.warn("Displays are not enough for combo {}", combo);
+                return;
+            }
+
+            logger.info(combo.toString());
+            applicableSignals.forEach(
+                    signal -> signal.getVideoFrames().removeAll(combo)
+            );
+//            logger.info("\n{}", dataCenter.toLogString());
+        });
 
         return clusters;
     }

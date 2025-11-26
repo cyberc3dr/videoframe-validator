@@ -1,5 +1,6 @@
 package ru.cyberc3dr.project;
 
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.cyberc3dr.project.algorithm.AlgorithmOneExecutor;
@@ -38,13 +39,13 @@ public class Main {
         if (datacenter == null) {
             datacenter = new DataCenter(
                 Set.of(
-                    new Signal("s1", Set.of("v1", "v2", "v3", "v4")),
-                    new Signal("s2", Set.of("v1", "v2", "v3")),
-                    new Signal("s3", Set.of("v3", "v4"))
+                    new Signal("s1", Sets.newHashSet("v1", "v2", "v3", "v4")),
+                    new Signal("s2", Sets.newHashSet("v1", "v2", "v3")),
+                    new Signal("s3", Sets.newHashSet("v3", "v4"))
                 ),
                 Set.of(
-                    new ARM("a1", 2, Set.of("v1", "v2")),
-                    new ARM("a2", 1, Set.of("v3", "v4"))
+                    new ARM("a1", 2, Sets.newHashSet("v1", "v2")),
+                    new ARM("a2", 1, Sets.newHashSet("v3", "v4"))
                 )
             );
         }
@@ -57,6 +58,9 @@ public class Main {
             logger.info("Testing for k={}", k);
             var clusters = executor.find(k);
         }
+
+        logger.info("Testing for k={}", 1);
+        executor.find(1);
     }
 
     private static void printDataCenter(DataCenter dc) {
