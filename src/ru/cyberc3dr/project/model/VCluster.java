@@ -1,14 +1,20 @@
 package ru.cyberc3dr.project.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.Set;
 
 @Data
-@AllArgsConstructor
-public final class VCluster implements Serializable {
-    private final List<String> videoframes;
-    private final List<Signal> signals;
+@RequiredArgsConstructor
+public final class VCluster implements Serializable, Comparable<VCluster> {
+    private final Set<String> videoframes;
+    private final Set<Signal> signals;
+
+    @Override
+    public int compareTo(@NotNull VCluster o) {
+        return signals.size() - o.signals.size();
+    }
 }
