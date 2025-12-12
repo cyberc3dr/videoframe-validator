@@ -41,7 +41,9 @@ public final class AlgorithmOneExecutor {
                 .filter(combo -> {
                     var rules = dataCenter.generateRules(combo);
 
-                    vfClusterCheck(combo, rules);
+                    var result = vfClusterCheck(combo, rules);
+
+                    logger.info("VCluster {} check result: {}", combo, result);
 
                     return true; // TODO
                 })
@@ -68,72 +70,59 @@ public final class AlgorithmOneExecutor {
 
         logger.info("Testing vfCluster: {}", frames);
 
-        var disps = new Stack<String>();
+        return solveAssignment(new ArrayList<>(rules), new LinkedList<>());
+    }
 
-        var appliedRules = new HashSet<Rule>();
+    private boolean solveAssignment(List<Rule> pendingRules, LinkedList<String> usedDisplays) {
+        // Все правила удовлетворены
+        if(pendingRules.isEmpty()) return true;
 
-        for(var frame : frames) {
-            var rule = rules.stream()
-                    .filter(r -> r.getVideoframe().equals(frame))
-                    .findFirst().orElseThrow();
+        Rule candidate = null;
+        int minOptions = Integer.MAX_VALUE;
 
-            var displays = rule.getDisplays();
-
-            if(displays.size() == 1) {
-                displays.forEach(disps::push);
-
-                appliedRules.add(rule);
-            }
-        }
-
-        logger.info("Stack");
-        disps.forEach(disp -> logger.info(" - {}", disp));
-
-        if(!disps.isEmpty()) {
-            var combos = Sets.combinations(rules, 2)
-                    .stream()
-                    .map(List::copyOf)
-                    .collect(Collectors.toSet());
-
-            var conflicts = combos.stream()
-                    .filter(combo -> {
-                        var rule1 = combo.get(0);
-                        var rule2 = combo.get(1);
-
-                        var intersection = Sets.intersection(rule1.getDisplays(), rule2.getDisplays());
-
-                        return !intersection.isEmpty();
-                    })
-                    .collect(Collectors.toSet());
-
-            if(conflicts.isEmpty()) {
-                rules.removeAll(appliedRules);
-                appliedRules.clear();
-
-                rules.forEach(rule -> disps.forEach(rule.getDisplays()::remove));
-
-                rules.forEach(rule -> {
-                    logger.info("After cleaning:");
-                    logger.info("{} {}", rule.getVideoframe(), rule.getDisplays());
-                });
-
-                if(rules.stream().anyMatch(rule -> rule.getDisplays().isEmpty())) {
-                    logger.info("Some rules have no displays left after assignment.");
-
-                    return false;
+        // Подбираем правило, которое имеет минимальное количество доступных дисплеев
+        // В данном состоянии стека использованных дисплеев
+        for(var rule : pendingRules) {
+            int currentOptions = 0;
+            for(var d : rule.getDisplays()) {
+                // Считаем количество неиспользованных до этого дисплеев.
+                if(!usedDisplays.contains(d)) {
+                    currentOptions++;
                 }
-            } else {
-                logger.info("Conflicts:");
-                conflicts.forEach(conflict -> {
-                    var rule1 = conflict.get(0);
-                    var rule2 = conflict.get(1);
+            }
 
-                    logger.info(" - {} {} <-> {} {}", rule1.getVideoframe(), rule1.getDisplays(),
-                            rule2.getVideoframe(), rule2.getDisplays());
-                });
+            // Если для правила нет доступных дисплеев, значит реализация невозможна
+            if(currentOptions == 0) return false;
+
+            if(currentOptions < minOptions) {
+                minOptions = currentOptions;
+                candidate = rule;
+                if(minOptions == 1) break; // если есть правило с одним вариантом, берем его сразу
             }
         }
 
+        List<Rule> nextStepRules = new ArrayList<>(pendingRules);
+        nextStepRules.remove(candidate);
+
+        assert candidate != null;
+        for(var d : candidate.getDisplays()) {
+            if(usedDisplays.contains(d)) continue;
+
+            // Выбираем дисплей для текущего правила
+            usedDisplays.add(d);
+
+            // Рекурсивно решаем оставшуюся часть задачи.
+            if(solveAssignment(nextStepRules, usedDisplays)) {
+                logger.info("Selected display {} for vframe {}", d, candidate.getVideoframe());
+                return true; // успешное завершение
+            }
+
+            // Если в итоге мы не нашли решение, делаем откат
+            // и берем следующий дисплей.
+            usedDisplays.remove(d);
+        }
+
+        // В случае если решений вообще не существует.
         return false;
     }
 

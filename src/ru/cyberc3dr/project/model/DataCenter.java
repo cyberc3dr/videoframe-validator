@@ -4,9 +4,9 @@ import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Data
@@ -40,7 +40,7 @@ public final class DataCenter implements Serializable {
                     .filter(arm -> arm.getVideoFrames().contains(frame))
                     .map(ARM::getDisplays)
                     .flatMap(Set::stream)
-                    .collect(Collectors.toSet()))
+                    .collect(Collectors.toCollection(TreeSet::new)))
             );
         }
 
