@@ -11,7 +11,7 @@ import ru.cyberc3dr.project.util.FileLoader;
 
 import java.util.Set;
 
-public class Main {
+public final class Main {
 
     public final static Logger logger = LoggerFactory.getLogger("Main");
 
@@ -54,13 +54,16 @@ public class Main {
         printDataCenter(datacenter);
 
         var executor = new AlgorithmOneExecutor(datacenter);
-        for(int k = datacenter.getAllDisplays(); k > 0; k--) {
-            logger.info("Testing for k={}", k);
-            var clusters = executor.find(k);
-        }
 
-        logger.info("Testing for k={}", 1);
-        executor.find(1);
+        executor.execute();
+
+//        for(int k = datacenter.getAllDisplays(); k > 0; k--) {
+//            logger.info("Testing for k={}", k);
+//            var clusters = executor.find(k);
+//        }
+//
+//        logger.info("Testing for k={}", 1);
+//        executor.find(1);
     }
 
     private static void printDataCenter(DataCenter dc) {

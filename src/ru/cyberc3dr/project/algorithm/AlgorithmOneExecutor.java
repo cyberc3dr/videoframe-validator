@@ -5,9 +5,7 @@ import org.apache.commons.lang3.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import ru.cyberc3dr.project.Main;
-import ru.cyberc3dr.project.model.DataCenter;
-import ru.cyberc3dr.project.model.Rule;
-import ru.cyberc3dr.project.model.VCluster;
+import ru.cyberc3dr.project.model.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -17,9 +15,55 @@ public final class AlgorithmOneExecutor {
     private final Logger logger = Main.logger;
 
     private final DataCenter dataCenter;
+    private final List<List<VCluster>> foundVClusters = new ArrayList<>();
+    private final List<Configuration> configurations = new ArrayList<>();
 
     public AlgorithmOneExecutor(DataCenter dataCenter) {
         this.dataCenter = SerializationUtils.clone(dataCenter);
+    }
+
+    public void execute() {
+        var k = dataCenter.getAllDisplays();
+
+        while(dataCenter.getSignals().stream().anyMatch((it) -> !it.getVideoFrames().isEmpty())) {
+            var vclusters = find(k);
+            while(vclusters.isEmpty() && k > 1) {
+                k--;
+                vclusters = find(k);
+            }
+
+            foundVClusters.add(vclusters);
+            updateConfigurations(vclusters.getFirst());
+
+            logger.info("Found vclusters! Power: {}, Clusters: {}", k, vclusters.size());
+        }
+
+        configurations.forEach(it -> logger.info(it.toLogString()));
+        logger.info("Total {} configurations found:", configurations.size());
+    }
+
+    public void updateConfigurations(VCluster vcluster) {
+        var signals = vcluster.getSignals().stream()
+                .map(Signal::getName)
+                .collect(Collectors.toSet());
+
+        Map<String, Set<String>> armToFrame = new HashMap<>();
+
+        for(var assignment : vcluster.getAssignments()) {
+            var frame = assignment.getVideoframe();
+            var display = assignment.getDisplay();
+
+            var arm = dataCenter.getArms().stream()
+                    .filter(a -> a.getDisplays().contains(display))
+                    .findFirst().orElseThrow();
+
+            armToFrame.putIfAbsent(arm.getArmName(), new HashSet<>());
+            armToFrame.get(arm.getArmName()).add(frame);
+        }
+
+        configurations.add(new Configuration(signals, armToFrame));
+
+        vcluster.getSignals().forEach((signal) -> signal.getVideoFrames().removeAll(vcluster.getVideoframes()));
     }
 
     public @NotNull List<VCluster> find(int power) {
@@ -38,42 +82,55 @@ public final class AlgorithmOneExecutor {
 
         var clusters = Sets.combinations(frames, power).stream()
                 .filter(combo -> applicableSignals.stream().anyMatch(signal -> signal.getVideoFrames().containsAll(combo)))
-                .filter(combo -> {
+                .map(combo -> {
                     var rules = dataCenter.generateRules(combo);
 
-                    var result = vfClusterCheck(combo, rules);
+                    var checkResult = vfClusterCheck(combo, rules);
 
-                    logger.info("VCluster {} check result: {}", combo, result);
+                    if(!checkResult.isValid()) return null;
 
-                    return true; // TODO
-                })
-                .map(combo -> {
                     var signals = applicableSignals.stream()
                             .filter(signal -> signal.getVideoFrames().containsAll(combo))
                             .collect(Collectors.toSet());
 
-                    return new VCluster(combo, signals);
+                    return new VCluster(power, combo, signals, checkResult.getAssignments());
                 })
+                .filter(Objects::nonNull)
                 .sorted(Comparator.reverseOrder())
                 .collect(Collectors.toList());
 
         clusters.forEach(cluster -> {
-            logger.info("{} {}", cluster.getVideoframes(), cluster.getSignals());
+            logger.info("{} {} {}", cluster.getVideoframes(), cluster.getSignals(), cluster.getAssignments());
 //            logger.info("\n{}", dataCenter.toLogString());
         });
 
         return clusters;
     }
 
-    public boolean vfClusterCheck(@NotNull Set<String> frames, Set<Rule> rules) {
-        if (frames.size() < 2) return true;
+    public ClusterCheckResult vfClusterCheck(@NotNull Set<String> frames, Set<Rule> rules) {
+        if (frames.size() < 2) {
+            LinkedList<DisplayAssignment> assignments = new LinkedList<>();
+
+            var rule = rules.stream().findFirst().orElseThrow();
+
+            var frame = rule.getVideoframe();
+            var display = rule.getDisplays().stream().findFirst().orElseThrow();
+
+            assignments.add(new DisplayAssignment(display, frame));
+
+            return new ClusterCheckResult(true, assignments);
+        }
 
         logger.info("Testing vfCluster: {}", frames);
 
-        return solveAssignment(new ArrayList<>(rules), new LinkedList<>());
+        LinkedList<DisplayAssignment> assignments = new LinkedList<>();
+
+        var isValid = solveAssignment(new ArrayList<>(rules), new LinkedList<>(), assignments);
+
+        return new ClusterCheckResult(isValid, assignments);
     }
 
-    private boolean solveAssignment(List<Rule> pendingRules, LinkedList<String> usedDisplays) {
+    private boolean solveAssignment(@NotNull List<Rule> pendingRules, LinkedList<String> usedDisplays, LinkedList<DisplayAssignment> assignments) {
         // Все правила удовлетворены
         if(pendingRules.isEmpty()) return true;
 
@@ -112,8 +169,9 @@ public final class AlgorithmOneExecutor {
             usedDisplays.add(d);
 
             // Рекурсивно решаем оставшуюся часть задачи.
-            if(solveAssignment(nextStepRules, usedDisplays)) {
+            if(solveAssignment(nextStepRules, usedDisplays, assignments)) {
                 logger.info("Selected display {} for vframe {}", d, candidate.getVideoframe());
+                assignments.add(new DisplayAssignment(d, candidate.getVideoframe()));
                 return true; // успешное завершение
             }
 
