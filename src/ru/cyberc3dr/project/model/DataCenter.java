@@ -64,6 +64,16 @@ public final class DataCenter implements Serializable {
               .append(" (displays=").append(a.getDisplayCount()).append(") : ")
               .append(a.getVideoFrames()).append("\n");
         }
+
+        var vframes = signals.stream()
+                .flatMap(signal -> signal.getVideoFrames().stream())
+                .collect(Collectors.toSet());
+
+        sb.append("Vframes (").append(vframes.size()).append("):\n");
+        for(var frame : vframes) {
+            sb.append("  - ").append(frame).append("\n");
+        }
+
         return sb.toString();
     }
 

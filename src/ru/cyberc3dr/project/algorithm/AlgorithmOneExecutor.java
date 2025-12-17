@@ -4,9 +4,11 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang3.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+import ru.cyberc3dr.project.FileOperations;
 import ru.cyberc3dr.project.Main;
 import ru.cyberc3dr.project.model.*;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -18,28 +20,51 @@ public final class AlgorithmOneExecutor {
     private final List<List<VCluster>> foundVClusters = new ArrayList<>();
     private final List<Configuration> configurations = new ArrayList<>();
 
+    private final StringBuilder logBuilder = new StringBuilder();
+
     public AlgorithmOneExecutor(DataCenter dataCenter) {
         this.dataCenter = SerializationUtils.clone(dataCenter);
     }
 
     public void execute() {
+        logBuilder.append(dataCenter.toLogString()).append("\n");
+
         var k = dataCenter.getAllDisplays();
 
         while(dataCenter.getSignals().stream().anyMatch((it) -> !it.getVideoFrames().isEmpty())) {
+            logBuilder.append("Testing power ").append(k).append("\n");
             var vclusters = find(k);
+
             while(vclusters.isEmpty() && k > 1) {
+                logBuilder.append("Power ").append(k).append(" is empty.\n");
                 k--;
+                logBuilder.append("Testing power ").append(k).append("\n");
                 vclusters = find(k);
             }
 
             foundVClusters.add(vclusters);
             updateConfigurations(vclusters.getFirst());
 
+            logBuilder.append("Found vclusters! Power: ")
+                    .append(k)
+                    .append(", Clusters: ")
+                    .append(vclusters.size())
+                    .append("\n\n");
+
             logger.info("Found vclusters! Power: {}, Clusters: {}", k, vclusters.size());
         }
 
-        configurations.forEach(it -> logger.info(it.toLogString()));
+        logBuilder.append("\n");
+
+        configurations.forEach(it -> {
+            logBuilder.append(it.toLogString()).append("\n\n");
+            logger.info(it.toLogString());
+        });
+
+        logBuilder.append("Total configurations: ").append(configurations.size());
         logger.info("Total {} configurations found:", configurations.size());
+
+        FileOperations.writeLiteral(new File("latest.log"), logBuilder.toString());
     }
 
     public void updateConfigurations(VCluster vcluster) {
@@ -72,6 +97,10 @@ public final class AlgorithmOneExecutor {
                 .toList();
 
         if(applicableSignals.isEmpty()) {
+            logBuilder.append("No applicable signals found for power ")
+                    .append(power)
+                    .append("\n");
+
             logger.warn("No applicable signals found for power {}", power);
             return Collections.emptyList();
         }
@@ -87,6 +116,8 @@ public final class AlgorithmOneExecutor {
 
                     var checkResult = vfClusterCheck(combo, rules);
 
+                    logBuilder.append("\n");
+
                     if(!checkResult.isValid()) return null;
 
                     var signals = applicableSignals.stream()
@@ -99,7 +130,19 @@ public final class AlgorithmOneExecutor {
                 .sorted(Comparator.reverseOrder())
                 .collect(Collectors.toList());
 
+        logBuilder.append("VClusters:\n");
+
         clusters.forEach(cluster -> {
+            logBuilder.append("vframes: ")
+                    .append(cluster.getVideoframes())
+                    .append("\n")
+                    .append("signals: ")
+                    .append(cluster.getSignals())
+                    .append("\n")
+                    .append("display assignments: ")
+                    .append(cluster.getAssignments())
+                    .append("\n\n");
+
             logger.info("{} {} {}", cluster.getVideoframes(), cluster.getSignals(), cluster.getAssignments());
 //            logger.info("\n{}", dataCenter.toLogString());
         });
@@ -121,11 +164,19 @@ public final class AlgorithmOneExecutor {
             return new ClusterCheckResult(true, assignments);
         }
 
+        logBuilder.append("VFClusterCheck - Testing vfcluster: ")
+                .append(frames)
+                .append("\n");
+
         logger.info("Testing vfCluster: {}", frames);
 
         LinkedList<DisplayAssignment> assignments = new LinkedList<>();
 
         var isValid = solveAssignment(new ArrayList<>(rules), new LinkedList<>(), assignments);
+
+        if(!isValid) {
+            logBuilder.append("TEST FAILED - vfcluster not valid\n");
+        }
 
         return new ClusterCheckResult(isValid, assignments);
     }
@@ -170,6 +221,12 @@ public final class AlgorithmOneExecutor {
 
             // Рекурсивно решаем оставшуюся часть задачи.
             if(solveAssignment(nextStepRules, usedDisplays, assignments)) {
+                logBuilder.append("Selected display ")
+                        .append(d)
+                        .append(" for vframe ")
+                        .append(candidate.getVideoframe())
+                        .append("\n");
+
                 logger.info("Selected display {} for vframe {}", d, candidate.getVideoframe());
                 assignments.add(new DisplayAssignment(d, candidate.getVideoframe()));
                 return true; // успешное завершение

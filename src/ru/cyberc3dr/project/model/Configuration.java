@@ -19,11 +19,13 @@ public final class Configuration {
         for (String arm : armToFrame.keySet()) {
             sb.append("ARM: ").append(arm).append("\n");
             sb.append("Video Frames:\n");
-            sb.append(String.join(", ", armToFrame.get(arm))).append("\n");
+            sb.append(String.join(", ", armToFrame.get(arm))).append("\n\n");
         }
 
-        sb.append("Signals:\n");
-        sb.append(String.join(", ", signals));
+        sb.append("Signals (").append(signals.size()).append("):\n");
+        sb.append(String.join("\n", signals));
+        sb.append("\n");
+        sb.append("-------------------------");
 
         return sb.toString();
     }

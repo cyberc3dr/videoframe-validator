@@ -39,6 +39,14 @@ public final class FileOperations {
     }
 
     public static void writeLiteral(@NotNull File file, String content) {
+        try {
+            if(file.createNewFile()) {
+                logger.info("{} has been created.", file.getName());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write(content);
             writer.flush();
