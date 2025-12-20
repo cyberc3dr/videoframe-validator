@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.cyberc3dr.project.algorithm.AlgorithmOneExecutor;
+import ru.cyberc3dr.project.algorithm.AlgorithmTwoExecutor;
 import ru.cyberc3dr.project.model.ARM;
 import ru.cyberc3dr.project.model.DataCenter;
 import ru.cyberc3dr.project.model.Signal;
@@ -35,9 +36,12 @@ public final class Main {
             logger.info("Insufficient arguments for file loading. Expected 4 paths: <signals> <signalsToFrames> <armsToFrames> <armMonitorCounts>. Using default dataset.");
         }
 
+        DataCenter first = datacenter;
+        DataCenter second = datacenter;
+
         // fallback — встроенный пример, если загрузка из файлов не удалась или аргументы не переданы
         if (datacenter == null) {
-            datacenter = new DataCenter(
+            first = new DataCenter(
                 Set.of(
                     new Signal("s1", Sets.newHashSet("v1", "v2", "v3", "v4")),
                     new Signal("s2", Sets.newHashSet("v1", "v2", "v3")),
@@ -48,14 +52,27 @@ public final class Main {
                     new ARM("a2", 1, Sets.newHashSet("v3", "v4"))
                 )
             );
+
+            second = new DataCenter(
+                Set.of(
+                    new Signal("s1", Sets.newHashSet("v1", "v2", "v3", "v4")),
+                    new Signal("s2", Sets.newHashSet("v2", "v3", "v4")),
+                    new Signal("s3", Sets.newHashSet("v3", "v4"))
+                ),
+                Set.of(
+                    new ARM("a1", 2, Sets.newHashSet("v1", "v2", "v3")),
+                    new ARM("a2", 1, Sets.newHashSet("v2", "v3", "v4"))
+                )
+            );
         }
 
-        // Log full datacenter using Main.logger
-        printDataCenter(datacenter);
+        var firstExecutor = new AlgorithmOneExecutor(first);
 
-        var executor = new AlgorithmOneExecutor(datacenter);
+        firstExecutor.execute();
 
-        executor.execute();
+        var secondExecutor = new AlgorithmTwoExecutor(second);
+
+        secondExecutor.execute();
 
 //        for(int k = datacenter.getAllDisplays(); k > 0; k--) {
 //            logger.info("Testing for k={}", k);
