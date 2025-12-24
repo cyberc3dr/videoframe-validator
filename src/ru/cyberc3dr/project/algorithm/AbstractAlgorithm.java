@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import ru.cyberc3dr.project.FileOperations;
 import ru.cyberc3dr.project.Main;
 import ru.cyberc3dr.project.model.*;
+import ru.cyberc3dr.project.solver.DisplayAssignmentSolver;
 
 import java.io.File;
 import java.util.*;
@@ -101,7 +102,7 @@ public abstract class AbstractAlgorithm {
         if (frames.size() < 2) {
             logBuilder.append("No need to test - 1 vframe\n");
 
-            LinkedList<DisplayAssignment> assignments = new LinkedList<>();
+            Set<DisplayAssignment> assignments = new HashSet<>();
 
             var rule = rules.stream().findFirst().orElseThrow();
 
@@ -113,10 +114,18 @@ public abstract class AbstractAlgorithm {
             return new ClusterCheckResult(true, assignments);
         }
 
-        LinkedList<DisplayAssignment> assignments = new LinkedList<>();
+//        LinkedList<DisplayAssignment> assignments = new LinkedList<>();
+//
+//        var isValid = solveAssignment(new ArrayList<>(rules), new LinkedList<>(), assignments);
+//
+//        if(!isValid) {
+//            logBuilder.append("TEST FAILED - vfcluster not valid\n");
+//        }
 
-        var isValid = solveAssignment(new ArrayList<>(rules), new LinkedList<>(), assignments);
+        DisplayAssignmentSolver solver = new DisplayAssignmentSolver(this);
+        Set<DisplayAssignment> assignments = solver.solve(rules);
 
+        var isValid = !assignments.isEmpty();
         if(!isValid) {
             logBuilder.append("TEST FAILED - vfcluster not valid\n");
         }
@@ -124,6 +133,7 @@ public abstract class AbstractAlgorithm {
         return new ClusterCheckResult(isValid, assignments);
     }
 
+    @Deprecated
     private boolean solveAssignment(@NotNull List<Rule> pendingRules, LinkedList<String> usedDisplays, LinkedList<DisplayAssignment> assignments) {
         // Все правила удовлетворены
         if(pendingRules.isEmpty()) return true;

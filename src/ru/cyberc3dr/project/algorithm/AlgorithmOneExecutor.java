@@ -39,14 +39,14 @@ public final class AlgorithmOneExecutor extends AbstractAlgorithm {
 
                 var configs = configurations.stream()
                         .filter(it -> {
-                            var clusters = it.getArmToFrame().values().stream()
+                            var vframes = it.getArmToFrame().values().stream()
                                     .flatMap(Collection::stream)
                                     .collect(Collectors.toSet());
 
-                            logger.info("clusters: {}", clusters);
+                            logger.info("vframes: {}", vframes);
                             logger.info("p={}, k={}, h={}", p, kk, hh);
 
-                            return clusters.size() == p && clusters.containsAll(vcluster.getVideoframes());
+                            return vframes.size() == p && vframes.containsAll(vcluster.getVideoframes());
                         })
                         .collect(Collectors.toSet());
 

@@ -1,0 +1,118 @@
+DataCenter:
+Signals (3):
+  - s1: [v1, v2, v3, v4]
+  - s3: [v3, v4]
+  - s2: [v2, v3, v1]
+ARMs (2):
+  - a1 (displays=2) : [v2, v1]
+  - a2 (displays=1) : [v3, v4]
+Vframes (4):
+  - v1
+  - v2
+  - v3
+  - v4
+
+Testing power 3
+VFClusterCheck - Testing vfcluster: [v1, v2, v3]
+Selected display d3 for vframe v3
+Selected display d2 for vframe v2
+Selected display d1 for vframe v1
+
+VFClusterCheck - Testing vfcluster: [v1, v2, v4]
+Selected display d3 for vframe v4
+Selected display d2 for vframe v2
+Selected display d1 for vframe v1
+
+VFClusterCheck - Testing vfcluster: [v1, v3, v4]
+Selected display d3 for vframe v4
+TEST FAILED - vfcluster not valid
+
+VFClusterCheck - Testing vfcluster: [v2, v3, v4]
+Selected display d3 for vframe v4
+TEST FAILED - vfcluster not valid
+
+VClusters:
+vframes: [v1, v2, v3]
+signals: [Signal(name=s2, videoFrames=[v2, v3, v1]), Signal(name=s1, videoFrames=[v1, v2, v3, v4])]
+display assignments: [DisplayAssignment(display=d1, videoframe=v1), DisplayAssignment(display=d3, videoframe=v3), DisplayAssignment(display=d2, videoframe=v2)]
+
+vframes: [v1, v2, v4]
+signals: [Signal(name=s1, videoFrames=[v1, v2, v3, v4])]
+display assignments: [DisplayAssignment(display=d1, videoframe=v1), DisplayAssignment(display=d2, videoframe=v2), DisplayAssignment(display=d3, videoframe=v4)]
+
+Found vclusters! Power: 3, Clusters: 2
+
+Testing power 3
+No applicable signals found for power 3
+Power 3 is empty.
+Testing power 2
+VFClusterCheck - Testing vfcluster: [v3, v4]
+Selected display d3 for vframe v4
+TEST FAILED - vfcluster not valid
+
+VClusters:
+Power 2 is empty.
+Testing power 1
+VFClusterCheck - Testing vfcluster: [v3]
+No need to test - 1 vframe
+
+VFClusterCheck - Testing vfcluster: [v4]
+No need to test - 1 vframe
+
+VClusters:
+vframes: [v4]
+signals: [Signal(name=s1, videoFrames=[v4]), Signal(name=s3, videoFrames=[v3, v4])]
+display assignments: [DisplayAssignment(display=d3, videoframe=v4)]
+
+vframes: [v3]
+signals: [Signal(name=s3, videoFrames=[v3, v4])]
+display assignments: [DisplayAssignment(display=d3, videoframe=v3)]
+
+Found vclusters! Power: 1, Clusters: 2
+
+Testing power 1
+VFClusterCheck - Testing vfcluster: [v3]
+No need to test - 1 vframe
+
+VClusters:
+vframes: [v3]
+signals: [Signal(name=s3, videoFrames=[v3])]
+display assignments: [DisplayAssignment(display=d3, videoframe=v3)]
+
+Found vclusters! Power: 1, Clusters: 1
+
+
+Configuration:
+ARM: a1
+Video Frames:
+v1, v2
+
+ARM: a2
+Video Frames:
+v3
+
+Signals (2):
+s1
+s2
+-------------------------
+
+Configuration:
+ARM: a2
+Video Frames:
+v4
+
+Signals (2):
+s3
+s1
+-------------------------
+
+Configuration:
+ARM: a2
+Video Frames:
+v3
+
+Signals (1):
+s3
+-------------------------
+
+Total configurations: 3
