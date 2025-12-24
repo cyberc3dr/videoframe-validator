@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 
 public final class AlgorithmOneExecutor extends AbstractAlgorithm {
 
-    private final List<List<VCluster>> foundVClusters = new ArrayList<>();
-
     public AlgorithmOneExecutor(DataCenter dataCenter) {
         super(dataCenter, "first");
     }
@@ -17,20 +15,54 @@ public final class AlgorithmOneExecutor extends AbstractAlgorithm {
     @Override
     public void doAlgorithmLogic() {
         var k = dataCenter.getAllDisplays();
+        var h = 0;
 
         while(dataCenter.getSignals().stream().anyMatch((it) -> !it.getVideoFrames().isEmpty())) {
             logBuilder.append("Testing power ").append(k).append("\n");
             var vclusters = find(k);
 
             while(vclusters.isEmpty() && k > 1) {
+                logger.info("Power {} is empty", k);
                 logBuilder.append("Power ").append(k).append(" is empty.\n");
+                h++;
                 k--;
                 logBuilder.append("Testing power ").append(k).append("\n");
                 vclusters = find(k);
             }
 
-            foundVClusters.add(vclusters);
-            updateConfigurations(vclusters.getFirst());
+            final var vcluster = vclusters.getFirst();
+
+            if(!configurations.isEmpty()) {
+                final var kk = k;
+                final var hh = h;
+                final var p = k + h;
+
+                var configs = configurations.stream()
+                        .filter(it -> {
+                            var clusters = it.getArmToFrame().values().stream()
+                                    .flatMap(Collection::stream)
+                                    .collect(Collectors.toSet());
+
+                            logger.info("clusters: {}", clusters);
+                            logger.info("p={}, k={}, h={}", p, kk, hh);
+
+                            return clusters.size() == p && clusters.containsAll(vcluster.getVideoframes());
+                        })
+                        .collect(Collectors.toSet());
+
+                logger.info("configs: {}", configs);
+
+                // Rule 2
+                if(!configs.isEmpty()) {
+                    configs.forEach(it -> updateConfigurations2(vcluster, it));
+                } else {
+                    updateConfigurations(vcluster);
+                }
+
+            } else {
+                updateConfigurations(vcluster);
+            }
+            h = 0;
 
             logBuilder.append("Found vclusters! Power: ")
                     .append(k)
@@ -62,6 +94,16 @@ public final class AlgorithmOneExecutor extends AbstractAlgorithm {
         }
 
         configurations.add(new Configuration(signals, armToFrame));
+
+        vcluster.getSignals().forEach((signal) -> signal.getVideoFrames().removeAll(vcluster.getVideoframes()));
+    }
+
+    public void updateConfigurations2(VCluster vcluster, Configuration config) {
+        var signals = vcluster.getSignals().stream()
+                .map(Signal::getName)
+                .collect(Collectors.toSet());
+
+        config.getSignals().addAll(signals);
 
         vcluster.getSignals().forEach((signal) -> signal.getVideoFrames().removeAll(vcluster.getVideoframes()));
     }
